@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 import pyaudio
 import speech_recognition as sr
@@ -10,43 +11,47 @@ import subprocess
 import glob
 from time import localtime, strftime
 import speekmodule
+import MySQLdb
 
 doss = os.getcwd()
 i=0
 n=0
 
-INFO = '''
-        +=======================================+
-        |.....JARVISE VIRTUAL INTELLIGENCE......|
-        +---------------------------------------+
-       
-        +---------------------------------------+
-        |.....JARVISE VIRTUAL INTELLIGENCE......|
-        +=======================================+
-        |              OPTIONS:                 |
-        |#hello/hi     #goodbye    #sleep mode  |
-        |#your name    #jarvis     #what time   |
-        +=======================================+
-        '''
-print(INFO)
-                                                 # obtain audio
-                                                   
+#print(INFO)
+connection = MySQLdb.connect (host = "localhost", user = "root", passwd = "", db = "va")
+cursor = connection.cursor ()
+cursor.execute ("select pingrediants from pinfo where pname='bread'")
+data = cursor.fetchall ()
+for row in data :
+    print 'bread ingrediants   - ',row[0]
+
+# JARVIS'S EARS========================================================================================================== SENSITIVE BRAIN
+                                                   # obtain audio
 while (i<1):
     r = sr.Recognizer()
-    with sr.AudioFile("D:\\c drive\\Downloads\\hello.wav") as source:
-        audio = r.record(source)
-        #audio = r.listen(audio)
-        #print(type(audio))
+    with sr.Microphone() as source:
+        audio = r.adjust_for_ambient_noise(source)
+        n=(n+1)     
+        print("Say something!")
+        audio = r.listen(source)
                                                    # interprete audio (Google Speech Recognition)
     try:
         s = (r.recognize_google(audio))
         message = (s.lower())
         print (message)
-        i=1
 
 
 # POLITE JARVIS ============================================================================================================= BRAIN 1
-    
+
+        if ('bread') in message:                          
+            cursor.execute ("select pingrediants from pinfo where pname='bread'")
+            data = cursor.fetchall ()
+            for row in data :
+                print 'bread ingrediants   - ',row[0]
+                rand = ['bread ingrediants are',row[0]]
+            speekmodule.speek(rand,n,mixer)
+            break
+        
         if ('goodbye') in message:                          
             rand = ['Goodbye Sir', 'Jarvis powering off in 3, 2, 1, 0']
             speekmodule.speek(rand,n,mixer)
@@ -76,26 +81,80 @@ while (i<1):
             rand = ['My name is Jarvis, at your service sir']
             speekmodule.speek(rand,n,mixer)
 
-        
-        if ('light on') in message:
-            rand = ['lights onn']
+# USEFUL JARVIS ============================================================================================================= BRAIN 2
+
+        if ('wi-fi') in message:  
+            REMOTE_SERVER = "www.google.com"
+            speekmodule.wifi()
+            rand = ['We are connected']
             speekmodule.speek(rand,n,mixer)
 
-        if ('light off') in message:
-            rand = ['lights off']
+        if ('.com') in message :
+            rand = ['Opening' + message]         
+            Chrome = ("C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s")
+            speekmodule.speek(rand,n,mixer)
+            webbrowser.get(Chrome).open('http://www.'+message)
+            print ('')
+            
+
+        if ('google maps') in message:
+            query = message
+            stopwords = ['google', 'maps']
+            querywords = query.split()
+            resultwords  = [word for word in querywords if word.lower() not in stopwords]
+            result = ' '.join(resultwords)
+            Chrome = ("C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s")
+            webbrowser.get(Chrome).open("https://www.google.be/maps/place/"+result+"/")
+            rand = [result+'on google maps']
             speekmodule.speek(rand,n,mixer)
 
-
-        if ('fan off') in message:
-            rand = ['Table fan offf']
+        if message != ('start music') and ('start') in message:   
+            query = message
+            stopwords = ['start']
+            querywords = query.split()
+            resultwords  = [word for word in querywords if word.lower() not in stopwords]
+            result = ' '.join(resultwords)
+            os.system('start ' + result)
+            rand = [('starting '+result)]
             speekmodule.speek(rand,n,mixer)
 
-
-        if ('fan on') in message:
-            rand = ['Table fan on']
+        if message != ('stop music') and ('stop') in message:
+            query = message
+            stopwords = ['stop']
+            querywords = query.split()
+            resultwords  = [word for word in querywords if word.lower() not in stopwords]
+            result = ' '.join(resultwords)
+            os.system('taskkill /im ' + result + '.exe /f')
+            rand = [('stopping '+result)]
             speekmodule.speek(rand,n,mixer)
 
+        if ('install') in message:
+            query = message
+            stopwords = ['install']
+            querywords = query.split()
+            resultwords  = [word for word in querywords if word.lower() not in stopwords]
+            result = ' '.join(resultwords)
+            rand = [('installing '+result)]
+            speekmodule.speek(rand,n,mixer)
+            os.system('python -m pip install ' + result)
 
+
+        if ('sleep mode') in message:
+            rand = ['good night']
+            speekmodule.speek(rand,n,mixer)
+            os.system('rundll32.exe powrprof.dll,SetSuspendState 0,1,0')
+
+        if ('music') in message:
+            mus = random.choice(glob.glob(doss + "\\music" + "\\*.mp3"))
+            os.system('chown -R user-id:group-id mus')
+            os.system('start ' + mus)
+            rand = ['start playing']
+            speekmodule.speek(rand,n,mixer)
+
+        if ('what time') in message:
+            tim = strftime("%X", localtime())
+            rand = [tim]
+            speekmodule.speek(rand,n,mixer)
 
     # exceptions
     except sr.UnknownValueError:
